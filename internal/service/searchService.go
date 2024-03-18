@@ -35,3 +35,14 @@ func (search *SearchService) AddSearchHistory(ctx context.Context, req *pb.Searc
 	}
 	return nil, nil
 }
+func (search *SearchService) GetSearchHistory(ctx context.Context, req *pb.UserId) (*pb.SearchResponse, error) {
+	searchHistory, err := search.usecases.GetSearchHistory(req.UserId)
+	if err != nil {
+		return &pb.SearchResponse{}, err
+	}
+	res := &pb.SearchResponse{
+		Designation: searchHistory.Keyword,
+	}
+
+	return res, nil
+}

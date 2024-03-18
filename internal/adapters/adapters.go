@@ -23,11 +23,18 @@ func (search *Adapter) AddSearchHistory(req entities.SearchHistory) error {
 	}
 	return nil
 }
-func (search *Adapter) GetSearchHistory(userId string) ([]entities.SearchHistory, error) {
+func (search *Adapter) GetSearchHistory(userId string) (entities.SearchHistory, error) {
 	selectSearchHistory := `SELECT * FROM search_histories WHERE user_id=$1`
-	var res []entities.SearchHistory
+	var res entities.SearchHistory
 	if err := search.DB.Raw(selectSearchHistory, userId).Scan(&res).Error; err != nil {
-		return []entities.SearchHistory{}, err
+		return entities.SearchHistory{}, err
 	}
 	return res, nil
+}
+func (search *Adapter) UpdateSearchHistory(req entities.SearchHistory) error {
+	updateQuery := `UPDATE search_histories SET keyword=$1 WHERE user_id=$2`
+	if err := search.DB.Exec(updateQuery, req.Keyword, req.UserId).Error; err != nil {
+		return err
+	}
+	return nil
 }

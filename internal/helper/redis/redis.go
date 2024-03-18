@@ -28,6 +28,9 @@ func Add(userId, value string) (int64, error) {
 	if result == 1 {
 		redisClient.Expire(key, 48*time.Hour)
 	}
+	if result == 5 {
+		redisClient.Set(key, "1", 48*time.Hour)
+	}
 
 	return result, nil
 }
