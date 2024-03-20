@@ -4,12 +4,13 @@ import (
 	"github.com/vishnusunil243/Job-Portal-Search-Service/internal/adapters"
 	"github.com/vishnusunil243/Job-Portal-Search-Service/internal/service"
 	"github.com/vishnusunil243/Job-Portal-Search-Service/internal/usecases"
+	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 )
 
-func Initializer(db *gorm.DB) *service.SearchService {
-	adapter := adapters.NewSearchAdapter(db)
+func Initializer(db *gorm.DB, mongoDB *mongo.Database) *service.SearchService {
+	adapter := adapters.NewSearchAdapter(db, mongoDB)
 	usecase := usecases.NewSearchUsecase(adapter)
-	service := service.NewSearchService(usecase)
+	service := service.NewSearchService(usecase, adapter)
 	return service
 }

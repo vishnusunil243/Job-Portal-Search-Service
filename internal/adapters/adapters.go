@@ -1,18 +1,28 @@
 package adapters
 
 import (
+	"context"
+	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/vishnusunil243/Job-Portal-Search-Service/entities"
+	"github.com/vishnusunil243/Job-Portal-Search-Service/internal/helper/helperstruct"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/gorm"
 )
 
 type Adapter struct {
-	DB *gorm.DB
+	DB      *gorm.DB
+	Mongodb *mongo.Database
 }
 
-func NewSearchAdapter(db *gorm.DB) *Adapter {
+func NewSearchAdapter(db *gorm.DB, mongodb *mongo.Database) *Adapter {
 	return &Adapter{
-		DB: db,
+		DB:      db,
+		Mongodb: mongodb,
 	}
 }
 func (search *Adapter) AddSearchHistory(req entities.SearchHistory) error {
@@ -37,4 +47,78 @@ func (search *Adapter) UpdateSearchHistory(req entities.SearchHistory) error {
 		return err
 	}
 	return nil
+}
+func (review *Adapter) UserAddReview(req helperstruct.ReviewHelper) error {
+	collection := review.Mongodb.Collection("userreview")
+	if collection == nil {
+		err := review.Mongodb.CreateCollection(context.Background(), "userreview")
+		if err != nil {
+			return err
+		}
+		collection = review.Mongodb.Collection("userreview")
+	}
+	reviewDoc := bson.M{
+		"userId":      req.UserId,
+		"companyId":   req.CompanyId,
+		"rating":      req.Rating,
+		"username":    req.Username,
+		"description": req.Description,
+		"timestamp":   time.Now(),
+	}
+	_, err := collection.InsertOne(context.Background(), reviewDoc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (review *Adapter) GetReviewsByCompany(companyId string) ([]bson.M, error) {
+	collection := review.Mongodb.Collection("userreview")
+	if collection == nil {
+		return nil, fmt.Errorf("collection not found")
+	}
+	filter := bson.M{"companyId": companyId}
+	options := options.Find().SetSort(bson.D{{"timestamp", -1}})
+	cursor, err := collection.Find(context.Background(), filter, options)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+	var reviews []bson.M
+	for cursor.Next(context.Background()) {
+		var review bson.M
+		err = cursor.Decode(&review)
+		if err != nil {
+			return nil, err
+		}
+		reviews = append(reviews, review)
+	}
+	return reviews, nil
+}
+func (review *Adapter) UserDeleteReview(userId string, companyId string) error {
+	collection := review.Mongodb.Collection("userreview")
+	if collection == nil {
+		return fmt.Errorf("collection is empty")
+	}
+	filter := bson.M{"userId": userId, "companyId": companyId}
+	_, err := collection.DeleteOne(context.Background(), filter)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (review *Adapter) GetReviewCheck(userId, companyId string) (bool, error) {
+	collection := review.Mongodb.Collection("userreview")
+	if collection == nil {
+		return false, fmt.Errorf("collection is empty")
+	}
+	filter := bson.M{"userId": userId, "companyId": companyId}
+	res := collection.FindOne(context.Background(), filter)
+
+	if res.Err() != nil {
+		if res.Err() == mongo.ErrNoDocuments {
+			return false, nil
+		}
+		return false, res.Err()
+	}
+	return true, nil
 }
