@@ -14,4 +14,5 @@ type AdapterInterface interface {
 	GetReviewsByCompany(companyId string) ([]bson.M, error)
 	UserDeleteReview(userId string, companyId string) error
 	GetReviewCheck(userId, companyId string) (bool, error)
+	GetAverageRatingOfCompany(companyId string) (float64, error)
 }

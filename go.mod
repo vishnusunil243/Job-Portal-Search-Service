@@ -6,7 +6,7 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
-	github.com/vishnusunil243/Job-Portal-proto-files v0.0.0-20240320172748-05082cb440d1
+	github.com/vishnusunil243/Job-Portal-proto-files v0.0.0-20240321034252-c3e4e8f56083
 	go.mongodb.org/mongo-driver v1.14.0
 	google.golang.org/grpc v1.62.1
 	google.golang.org/protobuf v1.33.0

@@ -122,3 +122,37 @@ func (review *Adapter) GetReviewCheck(userId, companyId string) (bool, error) {
 	}
 	return true, nil
 }
+
+func (r *Adapter) GetAverageRatingOfCompany(companyId string) (float64, error) {
+	collection := r.Mongodb.Collection("userreview")
+	if collection == nil {
+		return 0, fmt.Errorf("collection is empty")
+	}
+
+	pipeline := bson.A{
+		bson.M{"$match": bson.M{"companyId": companyId}},
+		bson.M{"$group": bson.M{"_id": "$companyId", "averageRating": bson.M{"$avg": "$rating"}}},
+	}
+
+	cursor, err := collection.Aggregate(context.Background(), pipeline)
+	if err != nil {
+		return 0, err
+	}
+
+	defer cursor.Close(context.Background())
+	if !cursor.Next(context.Background()) {
+		return 0, fmt.Errorf("no reviews found for company with ID: %s", companyId)
+	}
+
+	var result bson.M
+	if err := cursor.Decode(&result); err != nil {
+		return 0, err
+	}
+
+	averageRating, ok := result["averageRating"].(float64)
+	if !ok {
+		return 0, fmt.Errorf("invalid average rating format")
+	}
+
+	return averageRating, nil
+}

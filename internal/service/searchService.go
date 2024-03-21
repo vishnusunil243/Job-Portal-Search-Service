@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/vishnusunil243/Job-Portal-Search-Service/entities"
@@ -14,7 +15,8 @@ import (
 )
 
 var (
-	UserConn pb.UserServiceClient
+	UserConn    pb.UserServiceClient
+	CompanyConn pb.CompanyServiceClient
 )
 
 type SearchService struct {
@@ -78,6 +80,17 @@ func (review *SearchService) UserAddReview(ctx context.Context, req *pb.UserRevi
 	}
 	if err := review.adapters.UserAddReview(reqEntity); err != nil {
 		return nil, err
+	}
+	avgRating, err := review.adapters.GetAverageRatingOfCompany(req.CompanyId)
+	if err != nil {
+		log.Print("error while getting average rating", err)
+	}
+	_, err = CompanyConn.UpdateAverageRatingOfCompany(context.Background(), &pb.UpdateRatingRequest{
+		CompanyId: req.CompanyId,
+		AvgRating: float32(avgRating),
+	})
+	if err != nil {
+		log.Print("error while updating company rating", err)
 	}
 	return nil, nil
 }

@@ -29,10 +29,17 @@ func main() {
 	if err != nil {
 		log.Fatal("error connecting to user service")
 	}
+	companyConn, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
+	if err != nil {
+		log.Fatal("error connecting to company service")
+	}
 	defer func() {
 		userConn.Close()
+		companyConn.Close()
 	}()
 	userRes := pb.NewUserServiceClient(userConn)
+	companyRes := pb.NewCompanyServiceClient(companyConn)
+	service.CompanyConn = companyRes
 	service.UserConn = userRes
 	mongoDB, err := db.InitMongoDB(mongokey)
 	if err != nil {
