@@ -137,5 +137,15 @@ func (review *SearchService) RemoveReview(ctx context.Context, req *pb.UserRevie
 	if err := review.adapters.UserDeleteReview(req.UserId, req.CompanyId); err != nil {
 		return nil, err
 	}
+	avgRating, err := review.adapters.GetAverageRatingOfCompany(req.CompanyId)
+	if err != nil {
+		log.Print("error while getting average rating ", err)
+	}
+	if _, err := CompanyConn.UpdateAverageRatingOfCompany(context.Background(), &pb.UpdateRatingRequest{
+		CompanyId: req.CompanyId,
+		AvgRating: float32(avgRating),
+	}); err != nil {
+		return nil, err
+	}
 	return nil, nil
 }
