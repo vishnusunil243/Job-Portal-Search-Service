@@ -9,7 +9,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/vishnusunil243/Job-Portal-Search-Service/db"
 	"github.com/vishnusunil243/Job-Portal-Search-Service/initializer"
-	"github.com/vishnusunil243/Job-Portal-Search-Service/internal/service"
 	"github.com/vishnusunil243/Job-Portal-proto-files/pb"
 	"google.golang.org/grpc"
 )
@@ -25,22 +24,6 @@ func main() {
 
 	}
 	mongokey := os.Getenv("MONGO_KEY")
-	userConn, err := grpc.Dial("localhost:8081", grpc.WithInsecure())
-	if err != nil {
-		log.Fatal("error connecting to user service")
-	}
-	companyConn, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
-	if err != nil {
-		log.Fatal("error connecting to company service")
-	}
-	defer func() {
-		userConn.Close()
-		companyConn.Close()
-	}()
-	userRes := pb.NewUserServiceClient(userConn)
-	companyRes := pb.NewCompanyServiceClient(companyConn)
-	service.CompanyConn = companyRes
-	service.UserConn = userRes
 	mongoDB, err := db.InitMongoDB(mongokey)
 	if err != nil {
 		log.Fatal("error connecting to mongodb database")

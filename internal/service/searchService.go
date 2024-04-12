@@ -8,27 +8,29 @@ import (
 	"github.com/google/uuid"
 	"github.com/vishnusunil243/Job-Portal-Search-Service/entities"
 	"github.com/vishnusunil243/Job-Portal-Search-Service/internal/adapters"
+	"github.com/vishnusunil243/Job-Portal-Search-Service/internal/helper"
 	"github.com/vishnusunil243/Job-Portal-Search-Service/internal/helper/helperstruct"
 	"github.com/vishnusunil243/Job-Portal-Search-Service/internal/usecases"
 	"github.com/vishnusunil243/Job-Portal-proto-files/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-var (
+type SearchService struct {
 	UserConn    pb.UserServiceClient
 	CompanyConn pb.CompanyServiceClient
-)
-
-type SearchService struct {
-	usecases *usecases.SearchUsecase
-	adapters adapters.AdapterInterface
+	usecases    *usecases.SearchUsecase
+	adapters    adapters.AdapterInterface
 	pb.UnimplementedSearchServiceServer
 }
 
-func NewSearchService(usecases *usecases.SearchUsecase, adapters adapters.AdapterInterface) *SearchService {
+func NewSearchService(usecases *usecases.SearchUsecase, adapters adapters.AdapterInterface, companyaddr, useraddr string) *SearchService {
+	userConn, _ := helper.DialGrpc(useraddr)
+	companyConn, _ := helper.DialGrpc(companyaddr)
 	return &SearchService{
-		usecases: usecases,
-		adapters: adapters,
+		usecases:    usecases,
+		adapters:    adapters,
+		UserConn:    pb.NewUserServiceClient(userConn),
+		CompanyConn: pb.NewCompanyServiceClient(companyConn),
 	}
 }
 func (search *SearchService) AddSearchHistory(ctx context.Context, req *pb.SearchRequest) (*emptypb.Empty, error) {
@@ -58,7 +60,7 @@ func (search *SearchService) GetSearchHistory(ctx context.Context, req *pb.UserI
 	return res, nil
 }
 func (review *SearchService) UserAddReview(ctx context.Context, req *pb.UserReviewRequest) (*emptypb.Empty, error) {
-	user, err := UserConn.GetUser(context.Background(), &pb.GetUserById{
+	user, err := review.UserConn.GetUser(context.Background(), &pb.GetUserById{
 		Id: req.UserId,
 	})
 	if err != nil {
@@ -85,7 +87,7 @@ func (review *SearchService) UserAddReview(ctx context.Context, req *pb.UserRevi
 	if err != nil {
 		log.Print("error while getting average rating", err)
 	}
-	_, err = CompanyConn.UpdateAverageRatingOfCompany(context.Background(), &pb.UpdateRatingRequest{
+	_, err = review.CompanyConn.UpdateAverageRatingOfCompany(context.Background(), &pb.UpdateRatingRequest{
 		CompanyId: req.CompanyId,
 		AvgRating: float32(avgRating),
 	})
@@ -141,7 +143,7 @@ func (review *SearchService) RemoveReview(ctx context.Context, req *pb.UserRevie
 	if err != nil {
 		log.Print("error while getting average rating ", err)
 	}
-	if _, err := CompanyConn.UpdateAverageRatingOfCompany(context.Background(), &pb.UpdateRatingRequest{
+	if _, err := review.CompanyConn.UpdateAverageRatingOfCompany(context.Background(), &pb.UpdateRatingRequest{
 		CompanyId: req.CompanyId,
 		AvgRating: float32(avgRating),
 	}); err != nil {
