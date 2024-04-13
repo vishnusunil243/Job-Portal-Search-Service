@@ -20,7 +20,7 @@ func main() {
 	addr := os.Getenv("DB_KEY")
 	DB, err := db.InitDB(addr)
 	if err != nil {
-		log.Fatal("error connecting to database")
+		log.Fatal("error connecting to database", err)
 
 	}
 	mongokey := os.Getenv("MONGO_KEY")
