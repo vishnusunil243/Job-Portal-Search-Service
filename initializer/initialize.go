@@ -11,6 +11,6 @@ import (
 func Initializer(db *gorm.DB, mongoDB *mongo.Database) *service.SearchService {
 	adapter := adapters.NewSearchAdapter(db, mongoDB)
 	usecase := usecases.NewSearchUsecase(adapter)
-	service := service.NewSearchService(usecase, adapter, ":8082", ":8081")
+	service := service.NewSearchService(usecase, adapter, "company-service:8082", "user-service:8081")
 	return service
 }
